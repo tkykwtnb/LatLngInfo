@@ -30,7 +30,7 @@ from latlng_info_dockwidget import LatLngInfoDockWidget
 import os.path
 
 from qgis.gui import QgsMapToolEmitPoint
-from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry
 
 class LatLngInfo:
     """QGIS Plugin Implementation."""
@@ -245,22 +245,23 @@ class LatLngInfo:
 #        self.dockwidget.label_2.setText(u'label_2')
 
         canvasCRS = self.canvas.mapRenderer().destinationCrs().authid()
-        str(canvasCRS).replace("EPSG:", "")
-#        str(canvasCRS).append("test")
-#        crsWGS = QgsCoordinateReferenceSystem(4326)
-
-        x = point.x()
-        y = point.y()
-
-#        latLng = self.canvas.getCoordinateTransform().toMapCoordinates(x, y)
-#        lat = latLng.y()
-#        lng = latLng.x()
 
         if canvasCRS == "EPSG:4326":
-            self.dockwidget.lineEdit.setText(str(lat) + ',' + str(lng))
-            self.dockwidget.lineEdit.setText(str(y) + ',' + str(x))
-            self.dockwidget.lineEdit_2.setText(str(canvasCRS))
+            srcCRS = QgsCoordinateReferenceSystem(4326)
+            dstCRS = QgsCoordinateReferenceSystem(3857)
+            xform = QgsCoordinateTransform(srcCRS, dstCRS)
+            point_2 = xform.transform(point)
+
+            self.dockwidget.lineEdit.setText(str(point.y()) + ',' + str(point.x()))
+            self.dockwidget.lineEdit_2.setText(str(point_2.x()) + ',' + str(point_2.y()))
+        elif canvasCRS == "EPSG:3857":
+            srcCRS = QgsCoordinateReferenceSystem(3857)
+            dstCRS = QgsCoordinateReferenceSystem(4326)
+            xform = QgsCoordinateTransform(srcCRS, dstCRS)
+            point_2 = xform.transform(point)
+
+            self.dockwidget.lineEdit.setText(str(point_2.y()) + ',' + str(point_2.x()))
+            self.dockwidget.lineEdit_2.setText(str(point.x()) + ',' + str(point.y()))
         else:
-            self.dockwidget.lineEdit.setText(str(canvasCRS))
-            self.dockwidget.lineEdit_2.setText(str(lng) + ',' + str(lat))
-            self.dockwidget.lineEdit_2.setText(str(x) + ',' + str(y))
+            self.dockwidget.lineEdit.setText('-,-')
+            self.dockwidget.lineEdit_2.setText('-,-')

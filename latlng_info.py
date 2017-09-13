@@ -237,31 +237,37 @@ class LatLngInfo:
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
-            self.canvas.setMapTool(self.map_tool)
+            self.dockwidget.pushButton.clicked.connect(self.enableCapture)
 
     #--------------------------------------------------------------------------
 
+    def enableCapture(self):
+        self.canvas.setMapTool(self.map_tool)
+
+
     def getClickedLatLng(self, point, button):
+        # Qt.LeftButton   0x00000001
+        # Qt.RightButton  0x00000002
+
 #        self.dockwidget.label_2.setText(u'label_2')
 
         canvasCRS = self.canvas.mapRenderer().destinationCrs().authid()
+        canvasCRS = canvasCRS.replace("EPSG:", "")
+#        self.dockwidget.label_3.setText(str(canvasCRS))
 
-        if canvasCRS == "EPSG:4326":
-            srcCRS = QgsCoordinateReferenceSystem(4326)
-            dstCRS = QgsCoordinateReferenceSystem(3857)
-            xform = QgsCoordinateTransform(srcCRS, dstCRS)
-            point_2 = xform.transform(point)
-
+        srcCRS = QgsCoordinateReferenceSystem(int(canvasCRS))
+        if canvasCRS == "4326":
             self.dockwidget.lineEdit.setText(str(point.y()) + ',' + str(point.x()))
-            self.dockwidget.lineEdit_2.setText(str(point_2.x()) + ',' + str(point_2.y()))
-        elif canvasCRS == "EPSG:3857":
-            srcCRS = QgsCoordinateReferenceSystem(3857)
+        else:
             dstCRS = QgsCoordinateReferenceSystem(4326)
             xform = QgsCoordinateTransform(srcCRS, dstCRS)
             point_2 = xform.transform(point)
-
             self.dockwidget.lineEdit.setText(str(point_2.y()) + ',' + str(point_2.x()))
+
+        if canvasCRS == "3857":
             self.dockwidget.lineEdit_2.setText(str(point.x()) + ',' + str(point.y()))
         else:
-            self.dockwidget.lineEdit.setText('-,-')
-            self.dockwidget.lineEdit_2.setText('-,-')
+            dstCRS = QgsCoordinateReferenceSystem(3857)
+            xform = QgsCoordinateTransform(srcCRS, dstCRS)
+            point_2 = xform.transform(point)
+            self.dockwidget.lineEdit_2.setText(str(point_2.x()) + ',' + str(point_2.y()))
